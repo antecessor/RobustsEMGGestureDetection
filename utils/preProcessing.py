@@ -1,8 +1,9 @@
-from numpy.lib.stride_tricks import as_strided
-from sklearn.decomposition import FastICA
-from numpy.dual import pinv
-from scipy import signal
 import numpy as np
+from numpy.dual import pinv
+from numpy.lib.stride_tricks import as_strided
+from scipy import signal
+from scipy.signal import butter, lfilter
+from sklearn.decomposition import FastICA
 
 
 # calculating the SD signal
@@ -16,17 +17,16 @@ def calculateSD(sig):
     return singleDifferentialSignal
 
 
-def calculateICA(sdSig, labels, component=7):
+def calculateICA(sig, component=7):
     ica = FastICA(n_components=component)
     icaRes = []
-    labelNew = []
-    for index, sig in enumerate(sdSig):
+
+    for index, sig in enumerate(sig):
         try:
             icaRes.append(np.array(ica.fit_transform(sig.transpose())).transpose())
-            labelNew.append(labels[index])
         except:
             pass
-    return np.array(icaRes), np.array(labelNew)
+    return np.array(icaRes)
 
 
 def calculateFFTOnWindows(sdSigWindows):
@@ -49,12 +49,26 @@ def prepareFiringSignal(firings, sizeInputSignal=None, numSignals=None):
 def windowingSignalWithOverLap(sig, windowSize, overlap):
     windows = []
     arr = np.asarray(sig)
-    window = np.asarray(signal.flattop(windowSize, True))
+    window = np.kaiser(windowSize, 5)
     window_step = windowSize - overlap
     new_shape = arr.shape[:-1] + ((arr.shape[-1] - overlap) // window_step, windowSize)
     new_strides = (arr.strides[:-1] + (window_step * arr.strides[-1],) + arr.strides[-1:])
     windows.append(as_strided(arr, shape=new_shape, strides=new_strides) * window)
     return windows
+
+
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = butter(order, [low, high], btype='band')
+    return b, a
+
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = lfilter(b, a, data, axis=1)
+    return y
 
 
 def calculateWhiten(sdSig):

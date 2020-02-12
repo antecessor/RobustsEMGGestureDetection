@@ -1,11 +1,13 @@
 import os
+
 import numpy as np
-
 import scipy.io as sio
+from sklearn.model_selection import StratifiedKFold
 
-from sklearn.model_selection import train_test_split, StratifiedKFold
+from python.utils.preProcessing import windowingSignalWithOverLap, butter_bandpass_filter
 
-from python.utils.preProcessing import windowingSignalWithOverLap
+windowLen = 400
+overlap = 100
 
 
 def getSignal(subject, dayFrom, sessionOfDay, filePath="../Data/"):
@@ -51,7 +53,7 @@ def getSignal(subject, dayFrom, sessionOfDay, filePath="../Data/"):
                 mvc = 60
             elif str(mat['movement']).__contains__("90"):
                 mvc = 90
-
+            mat["outdataOriginal"] = butter_bandpass_filter(mat["outdataOriginal"], 20, 450, 1000)
             dataLoaded.append({'data': mat["outdataOriginal"][:, 1000:4000], 'label': label, 'movement': mvc, "subjectType": subjecType})
 
         return dataLoaded
@@ -77,7 +79,7 @@ def getTrainTestKFoldBasedOnDayToDay(subject, filePath):
     kFold = 5
     for day in range(5):
         for j in range(120):
-            windows = windowingSignalWithOverLap(data[day][j]["data"], 100, 10)
+            windows = windowingSignalWithOverLap(data[day][j]["data"], windowLen, overlap)
             allWindows.extend(windows)
             allLabels.append(data[day][j]["label"])
     allWindows = np.asarray(allWindows)
@@ -99,7 +101,7 @@ def getTrainTestKFoldBasedOnADay(subject, day, filePath):
         kFold = 2
     for session in range(kFold):
         for j in range(120):
-            windows = windowingSignalWithOverLap(data[session][j]["data"], 100, 10)
+            windows = windowingSignalWithOverLap(data[session][j]["data"], windowLen, overlap)
             allWindows.extend(windows)
             allLabels.append(data[session][j]["label"])
     allWindows = np.asarray(allWindows)
@@ -117,7 +119,7 @@ def getTrainTestKFoldBasedOnSession(subject, day, session, filePath, kFold):
     allWindows = []
     allLabels = []
     for j in range(120):
-        windows = windowingSignalWithOverLap(data[j]["data"], 100, 10)
+        windows = windowingSignalWithOverLap(data[j]["data"], windowLen, overlap)
         allWindows.extend(windows)
         allLabels.append(data[j]["label"])
     allWindows = np.asarray(allWindows)
