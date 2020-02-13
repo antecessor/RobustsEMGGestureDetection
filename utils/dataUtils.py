@@ -6,8 +6,8 @@ from sklearn.model_selection import StratifiedKFold
 
 from python.utils.preProcessing import windowingSignalWithOverLap, butter_bandpass_filter
 
-windowLen = 400
-overlap = 100
+windowLen = 500
+overlap = 150
 
 
 def getSignal(subject, dayFrom, sessionOfDay, filePath="../Data/"):
@@ -70,7 +70,7 @@ def getSignalForADay(subject, dayFrom, filePath="../Data/"):
     return data
 
 
-def getTrainTestKFoldBasedOnDayToDay(subject, filePath):
+def getTrainTestKFoldBasedOnDayToDay(subject, mvc, filePath):
     data = []
     for day in range(5):
         data.extend(getSignalForADay(subject, day, filePath))
@@ -79,9 +79,10 @@ def getTrainTestKFoldBasedOnDayToDay(subject, filePath):
     kFold = 5
     for day in range(5):
         for j in range(120):
-            windows = windowingSignalWithOverLap(data[day][j]["data"], windowLen, overlap)
-            allWindows.extend(windows)
-            allLabels.append(data[day][j]["label"])
+            if data[day][j]["movement"] == 0 or data[day][j]["movement"] == mvc:
+                windows = windowingSignalWithOverLap(data[day][j]["data"], windowLen, overlap)
+                allWindows.extend(windows)
+                allLabels.append(data[day][j]["label"])
     allWindows = np.asarray(allWindows)
     allLabels = np.asarray(allLabels)
     skf = StratifiedKFold(n_splits=kFold)
@@ -92,7 +93,7 @@ def getTrainTestKFoldBasedOnDayToDay(subject, filePath):
         yield X_train, y_train, X_test, y_test
 
 
-def getTrainTestKFoldBasedOnADay(subject, day, filePath):
+def getTrainTestKFoldBasedOnADay(subject, day, mvc, filePath):
     data = getSignalForADay(subject, day, filePath)
     allWindows = []
     allLabels = []
@@ -101,9 +102,10 @@ def getTrainTestKFoldBasedOnADay(subject, day, filePath):
         kFold = 2
     for session in range(kFold):
         for j in range(120):
-            windows = windowingSignalWithOverLap(data[session][j]["data"], windowLen, overlap)
-            allWindows.extend(windows)
-            allLabels.append(data[session][j]["label"])
+            if data[session][j]["movement"] == 0 or data[session][j]["movement"] == mvc:
+                windows = windowingSignalWithOverLap(data[session][j]["data"], windowLen, overlap)
+                allWindows.extend(windows)
+                allLabels.append(data[session][j]["label"])
     allWindows = np.asarray(allWindows)
     allLabels = np.asarray(allLabels)
     skf = StratifiedKFold(n_splits=kFold)
@@ -114,14 +116,15 @@ def getTrainTestKFoldBasedOnADay(subject, day, filePath):
         yield X_train, y_train, X_test, y_test
 
 
-def getTrainTestKFoldBasedOnSession(subject, day, session, filePath, kFold):
+def getTrainTestKFoldBasedOnSession(subject, day, session, mvc, filePath, kFold):
     data = getSignal(subject, day, session, filePath)
     allWindows = []
     allLabels = []
     for j in range(120):
-        windows = windowingSignalWithOverLap(data[j]["data"], windowLen, overlap)
-        allWindows.extend(windows)
-        allLabels.append(data[j]["label"])
+        if data[j]["movement"] == 0 or data[j]["movement"] == mvc:
+            windows = windowingSignalWithOverLap(data[j]["data"], windowLen, overlap)
+            allWindows.extend(windows)
+            allLabels.append(data[j]["label"])
     allWindows = np.asarray(allWindows)
     allLabels = np.asarray(allLabels)
     skf = StratifiedKFold(n_splits=kFold, shuffle=True)

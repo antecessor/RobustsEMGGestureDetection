@@ -15,7 +15,7 @@ class Test(TestCase):
         subject = 0
         day = 0
         session = 0
-        dataTrainTestKFold = getTrainTestKFoldBasedOnSession(subject, day, session, self.filePath, kFold)
+        dataTrainTestKFold = getTrainTestKFoldBasedOnSession(subject, day, session, 30, self.filePath, kFold)
         for dataTrainEachFold in dataTrainTestKFold:
             X_train, Y_train, X_test, Y_test = dataTrainEachFold
             lstmTrain(X_train, Y_train, X_test, Y_test)
@@ -23,7 +23,7 @@ class Test(TestCase):
 
     def test_lstmBasedOnDayToDay(self):
         subject = 0
-        dataTrainTestKFold = getTrainTestKFoldBasedOnDayToDay(subject, self.filePath)
+        dataTrainTestKFold = getTrainTestKFoldBasedOnDayToDay(subject, 30, self.filePath)
         for dataTrainEachFold in dataTrainTestKFold:
             X_train, Y_train, X_test, Y_test = dataTrainEachFold
             lstmTrain(X_train, Y_train, X_test, Y_test)

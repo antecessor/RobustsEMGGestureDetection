@@ -4,6 +4,7 @@ from numpy.lib.stride_tricks import as_strided
 from scipy import signal
 from scipy.signal import butter, lfilter
 from sklearn.decomposition import FastICA
+from sonopy import mfcc_spec
 
 
 # calculating the SD signal
@@ -80,17 +81,26 @@ def autocorr(x):
     return corr
 
 
-def calculateNormalizedOnCorr(signalWindow, label):
+def calculateNormalizedOnCorr(signalWindow):
     Rx = [autocorr(sigwin) for sigwin in signalWindow]
     mainSignalWindow = []
-    mainLalbe = []
     for index, rx in enumerate(Rx):
         signalWindow[index] = pinv(rx) @ signalWindow[index]
         if signalWindow[index].shape[1] == signalWindow[0].shape[1]:
-            mainSignalWindow.append(signalWindow[index])
-            mainLalbe.append(label[index])
+            mainSignalWindow.append(signalWindow[index] / np.max(signalWindow[index]))
 
-    return np.array(mainSignalWindow), np.array(mainLalbe)
+    return np.array(mainSignalWindow)
+
+
+def extractSoundFeatures(sig):
+    allFeature = []
+    for numberData in range(len(sig)):
+        feature = []
+        for channel in range(sig[numberData].shape[0]):
+            powers, filters, mels, mfccs = mfcc_spec(sig[numberData][channel, :], 1000, return_parts=True)
+            feature.append(np.median(mfccs, axis=0))
+        allFeature.append(np.asarray(feature))
+    return np.asarray(allFeature)
 
 
 def whiten(X, method='zca'):

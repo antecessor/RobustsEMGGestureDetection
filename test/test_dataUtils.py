@@ -1,7 +1,5 @@
 from unittest import TestCase
 
-import numpy as np
-
 from python.utils.dataUtils import getSignal, getSignalForADay, getTrainTestKFoldBasedOnSession, getTrainTestKFoldBasedOnADay, getTrainTestKFoldBasedOnDayToDay
 from python.utils.preProcessing import windowingSignalWithOverLap
 
@@ -32,19 +30,19 @@ class Test(TestCase):
         subject = 0
         day = 0
         session = 0
-        dataTrainTestKFold = getTrainTestKFoldBasedOnSession(subject, day, session, self.filePath, kFold)
+        dataTrainTestKFold = getTrainTestKFoldBasedOnSession(subject, day, session, 30, self.filePath, kFold)
         for dataTrainEachFold in dataTrainTestKFold:
             TestCase.assertIsNotNone(self, dataTrainEachFold)
 
     def test_trainTestSplitBasedOnADay(self):
         subject = 0
         day = 0
-        dataTrainTestKFold = getTrainTestKFoldBasedOnADay(subject, day, self.filePath)
+        dataTrainTestKFold = getTrainTestKFoldBasedOnADay(subject, day, 30, self.filePath)
         for dataTrainEachFold in dataTrainTestKFold:
             TestCase.assertIsNotNone(self, dataTrainEachFold)
 
     def test_trainTestSplitBasedDayToDay(self):
         subject = 0
-        dataTrainTestKFold = getTrainTestKFoldBasedOnDayToDay(subject, self.filePath)
+        dataTrainTestKFold = getTrainTestKFoldBasedOnDayToDay(subject, 30, self.filePath)
         for dataTrainEachFold in dataTrainTestKFold:
             TestCase.assertIsNotNone(self, dataTrainEachFold)
