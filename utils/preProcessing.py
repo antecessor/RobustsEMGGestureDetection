@@ -6,8 +6,10 @@ from scipy.signal import butter, lfilter
 from sklearn.decomposition import FastICA
 from sonopy import mfcc_spec
 
-
 # calculating the SD signal
+from python.utils.ShortTermFeatures import energy, energy_entropy, zero_crossing_rate
+
+
 def calculateSD(sig):
     nRow, nCol = sig.shape
     singleDifferentialSignal = []
@@ -99,7 +101,23 @@ def extractSoundFeatures(sig):
         for channel in range(sig[numberData].shape[0]):
             powers, filters, mels, mfccs = mfcc_spec(sig[numberData][channel, :], 1000, return_parts=True)
             feature.append(np.median(mfccs, axis=0))
-        allFeature.append(np.asarray(feature))
+            feature.append(np.std(mfccs, axis=0))
+        allFeature.append(np.asarray(feature).transpose())
+    return np.asarray(allFeature)
+
+
+def extractHudginsFeatures(sig):
+    allFeature = []
+    for numberData in range(len(sig)):
+        feature = []
+        for channel in range(sig[numberData].shape[0]):
+            energyFeature = energy(sig[numberData][channel, :])
+            energyEntropyFeature = energy_entropy(sig[numberData][channel, :])
+            zeroCrossingFeature = zero_crossing_rate(sig[numberData][channel, :])
+            feature.append(energyFeature)
+            feature.append(energyEntropyFeature)
+            feature.append(zeroCrossingFeature)
+        allFeature.append(np.asarray(feature).transpose())
     return np.asarray(allFeature)
 
 

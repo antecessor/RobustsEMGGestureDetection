@@ -42,7 +42,7 @@ class Test(TestCase):
             TestCase.assertIsNotNone(self, dataTrainEachFold)
 
     def test_trainTestSplitBasedDayToDay(self):
-        subject = 0
-        dataTrainTestKFold = getTrainTestKFoldBasedOnDayToDay(subject, 30, self.filePath)
+        subject = 11
+        dataTrainTestKFold = getTrainTestKFoldBasedOnDayToDay(subject, 'all', self.filePath)
         for dataTrainEachFold in dataTrainTestKFold:
             TestCase.assertIsNotNone(self, dataTrainEachFold)

@@ -6,25 +6,27 @@ from sklearn.model_selection import StratifiedKFold
 
 from python.utils.preProcessing import windowingSignalWithOverLap, butter_bandpass_filter
 
-windowLen = 500
-overlap = 150
+windowLen = 200
+overlap = 30
 
 
-def getSignal(subject, dayFrom, sessionOfDay, filePath="../Data/"):
+def getSignal(subject, day, sessionOfDay, filePath="../Data/"):
     if os.path.exists(filePath):
-        folders = os.listdir(filePath)
-        mainDirectory = filePath + folders[subject] + "/Data/DAQ/"
-        foldersSignal = os.listdir(mainDirectory)
-        selectedFolderMain = foldersSignal[3 * (dayFrom) + sessionOfDay]
-        mainDirectory = mainDirectory + selectedFolderMain
-        fileSignals = os.listdir(mainDirectory)
-        dataLoaded = []
-        if subject < 12:
+        if subject < 11:
             subjecType = "healthy"
+            maxSession = 3
         else:
+            maxSession = 2
             if sessionOfDay > 1:
                 print("For amputee only two session exist")
             subjecType = "amputees"
+        mainDirectory = filePath + 'DATA_Pat0{}'.format(subject + 1) + "/Data/DAQ/"
+        foldersSignal = os.listdir(mainDirectory)
+        selectedFolderMain = foldersSignal[maxSession * day + sessionOfDay]
+        mainDirectory = mainDirectory + selectedFolderMain
+        fileSignals = os.listdir(mainDirectory)
+        dataLoaded = []
+
         for i in range(120):
             mainDirectoryFile = mainDirectory + "/" + fileSignals[i]
             if fileSignals[i].__contains__("C001"):
@@ -61,13 +63,47 @@ def getSignal(subject, dayFrom, sessionOfDay, filePath="../Data/"):
 
 def getSignalForADay(subject, dayFrom, filePath="../Data/"):
     data = []
-    if subject < 12:
+    if subject < 11:
         for session in range(3):
             data.append(getSignal(subject, dayFrom, session, filePath))
     else:
         for session in range(2):
             data.append(getSignal(subject, dayFrom, session, filePath))
     return data
+
+
+def getSignalForADayWithNoShift(subject, dayFrom, filePath="../Data/"):
+    data = []
+    if subject < 11:
+        for session in range(1):
+            data.append(getSignal(subject, dayFrom, session, filePath))
+    else:
+        for session in range(1):
+            data.append(getSignal(subject, dayFrom, session, filePath))
+    return data
+
+
+def getTrainTestKFoldBasedOnDayToDayWithNoShift(subject, mvc, filePath):
+    data = []
+    for day in range(5):
+        data.extend(getSignalForADayWithNoShift(subject, day, filePath))
+    allWindows = []
+    allLabels = []
+    kFold = 5
+    for day in range(5):
+        for j in range(120):
+            if data[day][j]["movement"] == 0 or data[day][j]["movement"] == mvc or mvc == 'all':
+                windows = windowingSignalWithOverLap(data[day][j]["data"], windowLen, overlap)
+                allWindows.extend(windows)
+                allLabels.append(data[day][j]["label"])
+    allWindows = np.asarray(allWindows)
+    allLabels = np.asarray(allLabels)
+    skf = StratifiedKFold(n_splits=kFold)
+    for train_index, test_index in skf.split(allWindows, allLabels):
+        print("TRAIN:", train_index, "TEST:", test_index)
+        X_test, X_train = allWindows[train_index], allWindows[test_index]
+        y_test, y_train = allLabels[train_index], allLabels[test_index]
+        yield X_train, y_train, X_test, y_test
 
 
 def getTrainTestKFoldBasedOnDayToDay(subject, mvc, filePath):
@@ -79,7 +115,7 @@ def getTrainTestKFoldBasedOnDayToDay(subject, mvc, filePath):
     kFold = 5
     for day in range(5):
         for j in range(120):
-            if data[day][j]["movement"] == 0 or data[day][j]["movement"] == mvc:
+            if data[day][j]["movement"] == 0 or data[day][j]["movement"] == mvc or mvc == 'all':
                 windows = windowingSignalWithOverLap(data[day][j]["data"], windowLen, overlap)
                 allWindows.extend(windows)
                 allLabels.append(data[day][j]["label"])
@@ -98,11 +134,11 @@ def getTrainTestKFoldBasedOnADay(subject, day, mvc, filePath):
     allWindows = []
     allLabels = []
     kFold = 3
-    if subject > 12:
+    if subject >= 11:
         kFold = 2
     for session in range(kFold):
         for j in range(120):
-            if data[session][j]["movement"] == 0 or data[session][j]["movement"] == mvc:
+            if data[session][j]["movement"] == 0 or data[session][j]["movement"] == mvc or mvc == 'all':
                 windows = windowingSignalWithOverLap(data[session][j]["data"], windowLen, overlap)
                 allWindows.extend(windows)
                 allLabels.append(data[session][j]["label"])
