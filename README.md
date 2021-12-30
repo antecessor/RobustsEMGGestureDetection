@@ -1,2 +1,2 @@
 # RobustsEMGGestureDetection
-Detecting Gesture using sEMG signal.
+Detecting hand gesture using sEMG signal.
